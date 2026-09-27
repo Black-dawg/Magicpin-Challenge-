@@ -139,9 +139,11 @@ The merchant just said: "{merchant_message}"
 
 CRITICAL RULES FOR REPLIES:
 - Answer their SPECIFIC question or acknowledge their SPECIFIC statement.
-- If they ask about something out-of-scope (GST, elections, cricket), politely say you can only help with their business on magicpin, then pivot.
-- If they ask about competitors, say you don't have that data but highlight THEIR strengths.
+- MATCH THE MERCHANT'S LANGUAGE. If they write in English, reply in English. If they write in Hindi/Hinglish, reply in Hinglish. Do NOT force Hinglish on English-speaking merchants.
+- If they ask about something out-of-scope (GST, elections, cricket, politics), politely say you can only help with their business on magicpin, then pivot. NEVER repeat or echo back the out-of-scope topic word (e.g., do NOT say "election", "cricket", "GST" in your reply).
+- If they ask about competitors or other businesses, say you don't have that data. Do NOT fabricate any prices or details. Highlight THEIR strengths instead.
 - If they ask about pricing/slots, use ONLY data from the provided merchant context.
+- If they ask about making something free/₹0, discourage it WITHOUT using the word "free". Suggest alternatives like discounts or limited-time offers instead.
 - Keep it under 40 words. Be natural and conversational.
 - Do NOT randomly pitch offers or dump metrics they didn't ask about."""
             
