@@ -126,20 +126,31 @@ class AgenticOrchestrator:
                 
         return actions
 
-    def compose_message(self, category, merchant, trigger, customer=None, fsm_mode="ENGAGE_NORMAL") -> dict:
+    def compose_message(self, category, merchant, trigger, customer=None, fsm_mode="ENGAGE_NORMAL", reply_conv_id=None, merchant_message=None) -> dict:
         query = f"{trigger.get('kind', '')} {str(trigger.get('payload', ''))}"
+        if merchant_message:
+            query = merchant_message
         retrieved_fact = self.rag.retrieve(category.get("slug", ""), query)
         
         trigger_framing = TRIGGER_PROMPT_MAP.get(trigger.get("kind"), TRIGGER_PROMPT_MAP["default"])
         if trigger.get("id") == "reply_trigger":
-            trigger_framing = "Answer the merchant's latest message directly based on the conversation history. Keep it extremely brief and conversational. Do not pitch new offers or spout random metrics unless explicitly asked. If asked an out-of-scope question, politely decline and pivot back to their business."
+            trigger_framing = f"""You are replying to a merchant's message in an ongoing WhatsApp conversation.
+The merchant just said: "{merchant_message}"
+
+CRITICAL RULES FOR REPLIES:
+- Answer their SPECIFIC question or acknowledge their SPECIFIC statement.
+- If they ask about something out-of-scope (GST, elections, cricket), politely say you can only help with their business on magicpin, then pivot.
+- If they ask about competitors, say you don't have that data but highlight THEIR strengths.
+- If they ask about pricing/slots, use ONLY data from the provided merchant context.
+- Keep it under 40 words. Be natural and conversational.
+- Do NOT randomly pitch offers or dump metrics they didn't ask about."""
             
         cat_config = get_category_config(category.get("slug", ""))
         
         best_draft = None
         best_score = -1
         feedback = "None"
-        conv_id = f"conv_{merchant['merchant_id']}_{trigger['id']}"
+        conv_id = reply_conv_id or f"conv_{merchant['merchant_id']}_{trigger['id']}"
         history = self.memory.get_conversation_history(conv_id)
         history_str = "\n".join([f"{msg['role'].upper()}: {msg['message']}" for msg in history]) if history else "No previous history."
         
@@ -228,9 +239,9 @@ class AgenticOrchestrator:
         category = self.context_store["category"].get(merchant.get("category_slug")) if merchant else None
         
         if merchant and category:
-            # Dynamically compose LLM reply
+            # Dynamically compose LLM reply — pass the REAL conv_id and merchant message
             trigger = {"kind": "default", "id": "reply_trigger", "payload": {}}
-            action_dict = self.compose_message(category, merchant, trigger, None, fsm_mode=mode)
+            action_dict = self.compose_message(category, merchant, trigger, None, fsm_mode=mode, reply_conv_id=conv_id, merchant_message=message)
             if action_dict:
                 self.memory.add_to_history(conv_id, "vera", action_dict["body"])
                 return {"action": "send", "body": action_dict["body"], "cta": action_dict["cta"], "rationale": action_dict["rationale"]}
